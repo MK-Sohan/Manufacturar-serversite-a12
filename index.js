@@ -1,0 +1,55 @@
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 5000;
+const cors = require("cors");
+const { MongoClient, ServerApiVersion } = require("mongodb");
+
+require("dotenv").config();
+// Middleware------
+app.use(express.json());
+app.use(cors());
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xxu5i.mongodb.net/?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
+// client section start================================================================
+
+async function run() {
+  try {
+    await client.connect();
+    const tootlsCollection = client
+      .db("toolscollection_database")
+      .collection("alltools");
+    const reviewCollection = client
+      .db("toolscollection_database")
+      .collection("reviews");
+    app.get("/tool", async (req, res) => {
+      const query = {};
+      const result = await tootlsCollection.find(query).toArray();
+      res.send(result);
+    });
+    // reviews section start========================
+    app.get("/review", async (req, res) => {
+      const query = {};
+      const review = await reviewCollection.find(query).toArray();
+      res.send(review);
+    });
+
+    // reviews section end========================
+  } finally {
+  }
+}
+run().catch(console.dir);
+
+// client section end================================================================
+
+app.get("/", (req, res) => {
+  res.send("Assignment-12 server is running");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
