@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 require("dotenv").config();
 // Middleware------
@@ -20,7 +20,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const tootlsCollection = client
+    const toolsCollection = client
       .db("toolscollection_database")
       .collection("alltools");
     const reviewCollection = client
@@ -28,7 +28,14 @@ async function run() {
       .collection("reviews");
     app.get("/tool", async (req, res) => {
       const query = {};
-      const result = await tootlsCollection.find(query).toArray();
+      const result = await toolsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/tool/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await toolsCollection.findOne(query);
       res.send(result);
     });
     // reviews section start========================
