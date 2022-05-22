@@ -84,6 +84,10 @@ async function run() {
       );
       res.send({ result, token });
     });
+    app.get("/user", async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.send(users);
+    });
 
     // update user end===================================================
 
@@ -107,12 +111,17 @@ async function run() {
 
       res.send(orderresult);
     });
-    app.get("/myorder/:email", async (req, res) => {
+    app.get("/myorder/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const query = { email: email };
-      const result = await orderCollection.find(query).toArray();
+      const decodedemail = req.decoded.email;
+      if (email === decodedemail) {
+        const query = { email: email };
+        const result = await orderCollection.find(query).toArray();
 
-      res.send(result);
+        res.send(result);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
     });
 
     // order post section end==================
