@@ -47,6 +47,11 @@ async function run() {
       const review = await reviewCollection.find(query).toArray();
       res.send(review);
     });
+    app.post("/review", async (req, res) => {
+      const newreview = req.body;
+      const result = await reviewCollection.insertOne(newreview);
+      res.send(result);
+    });
 
     // reviews section end========================
     // order post section start==================
@@ -55,6 +60,13 @@ async function run() {
       const orderresult = await orderCollection.insertOne(placeorder);
 
       res.send(orderresult);
+    });
+    app.get("/myorder/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await orderCollection.find(query).toArray();
+
+      res.send(result);
     });
 
     // order post section end==================
