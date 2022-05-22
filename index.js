@@ -26,6 +26,9 @@ async function run() {
     const reviewCollection = client
       .db("toolscollection_database")
       .collection("reviews");
+    const orderCollection = client
+      .db("toolscollection_database")
+      .collection("orders");
     app.get("/tool", async (req, res) => {
       const query = {};
       const result = await toolsCollection.find(query).toArray();
@@ -46,6 +49,15 @@ async function run() {
     });
 
     // reviews section end========================
+    // order post section start==================
+    app.post("/order", async (req, res) => {
+      const placeorder = req.body;
+      const orderresult = await orderCollection.insertOne(placeorder);
+
+      res.send(orderresult);
+    });
+
+    // order post section end==================
   } finally {
   }
 }
