@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 // Middleware------
 app.use(express.json());
@@ -15,10 +15,30 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// jwt verify======================
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "UnAuthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+// jwt verify======================
+
 // client section start================================================================
 
 async function run() {
   try {
+    // collection start====================================
     await client.connect();
     const toolsCollection = client
       .db("toolscollection_database")
@@ -29,6 +49,10 @@ async function run() {
     const orderCollection = client
       .db("toolscollection_database")
       .collection("orders");
+    const userCollection = client
+      .db("toolscollection_database")
+      .collection("users");
+    // collection end=============================================
     app.get("/tool", async (req, res) => {
       const query = {};
       const result = await toolsCollection.find(query).toArray();
@@ -41,6 +65,28 @@ async function run() {
       const result = await toolsCollection.findOne(query);
       res.send(result);
     });
+
+    // update user start===================================================
+
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "40d" }
+      );
+      res.send({ result, token });
+    });
+
+    // update user end===================================================
+
     // reviews section start========================
     app.get("/review", async (req, res) => {
       const query = {};
