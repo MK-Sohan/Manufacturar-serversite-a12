@@ -53,6 +53,11 @@ async function run() {
       .db("toolscollection_database")
       .collection("users");
     // collection end=============================================
+    app.post("/tool", verifyJWT, async (req, res) => {
+      const newproduct = req.body;
+      const result = await toolsCollection.insertOne(newproduct);
+      res.send(result);
+    });
     app.get("/tool", async (req, res) => {
       const query = {};
       const result = await toolsCollection.find(query).toArray();
