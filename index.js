@@ -60,9 +60,15 @@ async function run() {
       const result = await toolsCollection.insertOne(newproduct);
       res.send(result);
     });
-    app.get("/tool", async (req, res) => {
+    app.get("/tool", verifyJWT, async (req, res) => {
       const query = {};
       const result = await toolsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.delete("/tool/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await toolsCollection.deleteOne(query);
       res.send(result);
     });
 
@@ -75,17 +81,17 @@ async function run() {
 
     // payment method api start===========================
 
-    app.post("/create-payment-intent", async (req, res) => {
-      const orderprice = req.body;
-      console.log(orderprice);
-      const price = orderprice.price;
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const price = req.body;
+      // console.log(orderprice);
+      // const price = orderprice.price;
       const amount = price * 100;
 
-      // const paymentIntent = await stripe.paymentIntents.create({
-      //   amount: amount,
-      //   currency: "usd",
-      //   payment_method_types: ["card"],
-      // });
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
       res.send({ clientSecret: paymentIntent.client_secret });
     });
     // payment method api end===========================
