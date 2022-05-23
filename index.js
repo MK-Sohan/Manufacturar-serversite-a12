@@ -45,6 +45,9 @@ async function run() {
     const toolsCollection = client
       .db("toolscollection_database")
       .collection("alltools");
+    const profileCollection = client
+      .db("toolscollection_database")
+      .collection("profile");
     const reviewCollection = client
       .db("toolscollection_database")
       .collection("reviews");
@@ -182,6 +185,29 @@ async function run() {
     });
 
     // order post section end==================
+    // update profile start=============
+    app.put("/profile/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const update = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: update,
+      };
+      const result = await profileCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+    app.get("/profile/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await profileCollection.findOne(query);
+      res.send(result);
+    });
+    // update profile end=============
     // delete order start=================
     app.delete("/myorder/:id", async (req, res) => {
       const id = req.params.id;
