@@ -3,8 +3,10 @@ const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+
 // Middleware------
 app.use(express.json());
 app.use(cors());
@@ -70,6 +72,23 @@ async function run() {
       const result = await toolsCollection.findOne(query);
       res.send(result);
     });
+
+    // payment method api start===========================
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const orderprice = req.body;
+      console.log(orderprice);
+      const price = orderprice.price;
+      const amount = price * 100;
+
+      // const paymentIntent = await stripe.paymentIntents.create({
+      //   amount: amount,
+      //   currency: "usd",
+      //   payment_method_types: ["card"],
+      // });
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+    // payment method api end===========================
 
     // update user start===================================================
 
@@ -162,6 +181,12 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.get("/paymentorder/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.findOne(query);
       res.send(result);
     });
 
