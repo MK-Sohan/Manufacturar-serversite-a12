@@ -201,11 +201,16 @@ async function run() {
       );
       res.send(result);
     });
-    app.get("/profile/:email", async (req, res) => {
+    app.get("/updatedprofile/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
-      const result = await profileCollection.findOne(query);
-      res.send(result);
+      const decodedemail = req.decoded.email;
+      if (email === decodedemail) {
+        const result = await profileCollection.findOne(query);
+        res.send(result);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
     });
     // update profile end=============
     // delete order start=================
