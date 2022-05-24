@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+console.log(process.env.SECRET_KEY);
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -63,6 +65,22 @@ async function run() {
       const result = await toolsCollection.insertOne(newproduct);
       res.send(result);
     });
+
+    app.put("/inventory/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateProduct = req.body;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          quantity: updateProduct.newQuantity,
+        },
+      };
+
+      const result = await toolsCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
     app.get("/tool", verifyJWT, async (req, res) => {
       const query = {};
       const result = await toolsCollection.find(query).toArray();
@@ -75,6 +93,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/manageorder", verifyJWT, async (req, res) => {
+      const query = {};
+      const result = await orderCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.get("/tool/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -83,20 +107,20 @@ async function run() {
     });
 
     // payment method api start===========================
-
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-      const price = req.body;
-      // console.log(orderprice);
-      // const price = orderprice.price;
+    app.post("/create-payment-intent", async (req, res) => {
+      const service = req.body;
+      const price = service?.price;
+      console.log(price);
       const amount = price * 100;
-
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntent = await stripe?.paymentIntents.create({
         amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
       });
+      console.log(paymentIntent);
       res.send({ clientSecret: paymentIntent.client_secret });
     });
+
     // payment method api end===========================
 
     // update user start===================================================
@@ -184,6 +208,15 @@ async function run() {
       }
     });
 
+    // find order with id===================
+    app.get("/payorder/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.findOne(query);
+      res.send(result);
+    });
+
+    // find order with id===================
     // order post section end==================
     // update profile start=============
     app.put("/profile/:email", verifyJWT, async (req, res) => {
@@ -218,12 +251,6 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await orderCollection.deleteOne(query);
-      res.send(result);
-    });
-    app.get("/paymentorder/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await orderCollection.findOne(query);
       res.send(result);
     });
 
