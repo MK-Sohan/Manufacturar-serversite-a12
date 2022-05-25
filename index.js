@@ -239,6 +239,13 @@ async function run() {
       res.send(updatedOrder);
     });
 
+    app.delete("/admindelete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // order post section end==================
     // update profile start=============
     app.put("/profile/:email", verifyJWT, async (req, res) => {
