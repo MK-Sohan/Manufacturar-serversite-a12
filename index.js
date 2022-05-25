@@ -230,6 +230,7 @@ async function run() {
       const updatedDoc = {
         $set: {
           paid: true,
+          status: "pending",
           transactionId: payment.transactionId,
         },
       };
@@ -237,6 +238,19 @@ async function run() {
       const result = await paymentCollection.insertOne(payment);
       const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
       res.send(updatedOrder);
+    });
+
+    //orders update api
+    app.patch("/manageOrder/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "shipped",
+        },
+      };
+      const result = await orderCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     app.delete("/admindelete/:id", async (req, res) => {
