@@ -1,13 +1,14 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const stripe = require("stripe")(process.env.SECRET_KEY);
 console.log(process.env.SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
 
 // Middleware------
 app.use(express.json());
@@ -56,6 +57,9 @@ async function run() {
     const orderCollection = client
       .db("toolscollection_database")
       .collection("orders");
+    const paymentCollection = client
+      .db("toolscollection_database")
+      .collection("payment");
     const userCollection = client
       .db("toolscollection_database")
       .collection("users");
@@ -66,20 +70,20 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/inventory/:id", async (req, res) => {
-      const id = req.params.id;
-      const updateProduct = req.body;
-      const query = { _id: ObjectId(id) };
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          quantity: updateProduct.newQuantity,
-        },
-      };
+    // app.put("/inventory/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const updateProduct = req.body;
+    //   const query = { _id: ObjectId(id) };
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       quantity: updateProduct.newQuantity,
+    //     },
+    //   };
 
-      const result = await toolsCollection.updateOne(query, updateDoc, options);
-      res.send(result);
-    });
+    //   const result = await toolsCollection.updateOne(query, updateDoc, options);
+    //   res.send(result);
+    // });
 
     app.get("/tool", verifyJWT, async (req, res) => {
       const query = {};
@@ -107,17 +111,18 @@ async function run() {
     });
 
     // payment method api start===========================
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const service = req.body;
+      console.log(service);
       const price = service?.price;
-      console.log(price);
+      console.log("this is price", price);
       const amount = price * 100;
-      const paymentIntent = await stripe?.paymentIntents.create({
+      console.log("this is amount", amount);
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
       });
-      console.log(paymentIntent);
       res.send({ clientSecret: paymentIntent.client_secret });
     });
 
@@ -217,6 +222,23 @@ async function run() {
     });
 
     // find order with id===================
+
+    app.patch("/paymentorder/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+      res.send(updatedOrder);
+    });
+
     // order post section end==================
     // update profile start=============
     app.put("/profile/:email", verifyJWT, async (req, res) => {
