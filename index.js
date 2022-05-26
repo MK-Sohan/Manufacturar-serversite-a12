@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const cors = require("cors");
 const stripe = require("stripe")(process.env.SECRET_KEY);
-console.log(process.env.SECRET_KEY);
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const jwt = require("jsonwebtoken");
@@ -113,11 +113,11 @@ async function run() {
     // payment method api start===========================
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const service = req.body;
-      console.log(service);
+      // console.log(service);
       const price = service?.price;
-      console.log("this is price", price);
+      // console.log("this is price", price);
       const amount = price * 100;
-      console.log("this is amount", amount);
+      // console.log("this is amount", amount);
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
